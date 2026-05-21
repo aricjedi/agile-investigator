@@ -37,6 +37,7 @@ export default async function AssessmentPage({
     .from("assessments")
     .select("id, status, organization_id")
     .eq("id", id)
+    .returns<{ id: string; status: string; organization_id: string }[]>()
     .single();
 
   if (!assessment) notFound();
@@ -50,7 +51,8 @@ export default async function AssessmentPage({
   const { data: responseRows } = await supabase
     .from("assessment_responses")
     .select("dimension, question_index, score")
-    .eq("assessment_id", id);
+    .eq("assessment_id", id)
+    .returns<{ dimension: string; question_index: number; score: number }[]>();
 
   // Convert flat rows → nested map: { dimensionName → { questionIndex → score } }
   const existingResponses: Record<string, Record<number, number>> = {};

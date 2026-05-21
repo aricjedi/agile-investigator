@@ -21,6 +21,7 @@ export default async function AdminLayout({
   const { data: orgs } = await supabase
     .from("organizations")
     .select("id, name, slug, status, health_score")
+    .returns<Pick<Organization, "id" | "name" | "slug" | "status" | "health_score">[]>()
     .order("name");
 
   const organizations: Organization[] = orgs ?? [];

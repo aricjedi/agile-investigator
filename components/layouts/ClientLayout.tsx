@@ -28,6 +28,7 @@ export default async function ClientLayout({
     .from("profiles")
     .select("*, organizations(*)")
     .eq("user_id", user?.id ?? "")
+    .returns<(Profile & { organizations: Organization })[]>()
     .single();
 
   const profile = profileRow as (Profile & { organizations: Organization }) | null;
