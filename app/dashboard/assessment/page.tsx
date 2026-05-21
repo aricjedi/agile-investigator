@@ -25,6 +25,7 @@ export default async function AssessmentEntryPage() {
     .from("profiles")
     .select("id, organization_id")
     .eq("user_id", user.id)
+    .returns<{ id: string; organization_id: string | null }[]>()
     .single();
 
   if (!profile?.organization_id) redirect("/auth/login");
@@ -37,6 +38,7 @@ export default async function AssessmentEntryPage() {
     .eq("status", "draft")
     .order("created_at", { ascending: false })
     .limit(1)
+    .returns<{ id: string }[]>()
     .maybeSingle();
 
   if (draft) {
@@ -50,8 +52,9 @@ export default async function AssessmentEntryPage() {
       organization_id: profile.organization_id,
       created_by:      profile.id,
       status:          "draft",
-    })
+    } as unknown as never)
     .select("id")
+    .returns<{ id: string }[]>()
     .single();
 
   if (error || !assessment) {

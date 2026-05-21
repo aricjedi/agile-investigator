@@ -47,7 +47,7 @@ export async function saveResponses(
 
   const { error } = await supabase
     .from("assessment_responses")
-    .upsert(rows, { onConflict: "assessment_id,dimension,question_index" });
+    .upsert(rows as unknown as never[], { onConflict: "assessment_id,dimension,question_index" });
 
   if (error) throw new Error(`saveResponses failed: ${error.message}`);
 }
@@ -65,7 +65,8 @@ export async function submitAssessment(assessmentId: string): Promise<number> {
   const { data: responseRows, error: respError } = await supabase
     .from("assessment_responses")
     .select("dimension, question_index, score")
-    .eq("assessment_id", assessmentId);
+    .eq("assessment_id", assessmentId)
+    .returns<{ dimension: string; question_index: number; score: number }[]>();
 
   if (respError) throw new Error(`Could not load responses: ${respError.message}`);
 
@@ -90,16 +91,17 @@ export async function submitAssessment(assessmentId: string): Promise<number> {
 
   const { error: dimError } = await supabase
     .from("dimension_scores")
-    .upsert(dimRows, { onConflict: "assessment_id,dimension" });
+    .upsert(dimRows as unknown as never[], { onConflict: "assessment_id,dimension" });
 
   if (dimError) throw new Error(`Could not save dimension scores: ${dimError.message}`);
 
   // Mark assessment complete
   const { data: assessment, error: updateError } = await supabase
     .from("assessments")
-    .update({ status: "complete", completed_at: new Date().toISOString() })
+    .update({ status: "complete", completed_at: new Date().toISOString() } as unknown as never)
     .eq("id", assessmentId)
     .select("organization_id")
+    .returns<{ organization_id: string }[]>()
     .single();
 
   if (updateError || !assessment) {

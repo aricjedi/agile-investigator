@@ -37,6 +37,7 @@ export async function middleware(request: NextRequest) {
       .from("profiles")
       .select("role")
       .eq("user_id", user.id)
+      .returns<{ role: string }[]>()
       .single();
 
     const role = profile?.role as UserRole | undefined;

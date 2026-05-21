@@ -47,6 +47,7 @@ export default async function DashboardPage() {
       .eq("status", "complete")
       .order("completed_at", { ascending: false })
       .limit(1)
+      .returns<{ id: string }[]>()
       .maybeSingle();
 
     if (latestAssessment) {
@@ -55,7 +56,8 @@ export default async function DashboardPage() {
         .from("dimension_scores")
         .select("dimension, raw_score, weighted_score")
         .eq("assessment_id", latestAssessment.id)
-        .order("weighted_score", { ascending: false });
+        .order("weighted_score", { ascending: false })
+        .returns<{ dimension: string; raw_score: number; weighted_score: number }[]>();
 
       dimScores = scores ?? [];
     }

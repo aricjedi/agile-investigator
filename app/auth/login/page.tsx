@@ -64,6 +64,7 @@ export default function LoginPage() {
       .from("profiles")
       .select("role, organization_id")
       .eq("user_id", user.id)
+      .returns<{ role: string; organization_id: string | null }[]>()
       .single();
 
     // ---- Route by role ----
