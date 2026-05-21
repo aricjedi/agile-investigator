@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/supabase";
 
 // Server-side Supabase client — use in Server Components, Route Handlers,
 // and Server Actions. Reads/writes cookies from the Next.js cookie store.

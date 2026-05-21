@@ -60,27 +60,7 @@ export interface DimensionScore {
 }
 
 // ---------------------------------------------------------------------------
-// Supabase generated DB shape (subset) — expand as tables are added
+// Supabase Database type — full definition lives in types/supabase.ts.
+// Re-exported here so existing imports of Database from this file keep working.
 // ---------------------------------------------------------------------------
-export interface Database {
-  public: {
-    Tables: {
-      organizations: {
-        Row: Organization;
-        Insert: Omit<Organization, "id" | "created_at"> & { id?: string; created_at?: string };
-        Update: Partial<Organization>;
-      };
-      profiles: {
-        Row: Profile;
-        Insert: Omit<Profile, "id" | "created_at"> & { id?: string; created_at?: string };
-        Update: Partial<Profile>;
-      };
-    };
-    Views: Record<string, never>;
-    Functions: Record<string, never>;
-    Enums: {
-      organization_status: OrganizationStatus;
-      user_role: UserRole;
-    };
-  };
-}
+export type { Database } from "@/types/supabase";

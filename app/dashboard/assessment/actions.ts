@@ -65,8 +65,7 @@ export async function submitAssessment(assessmentId: string): Promise<number> {
   const { data: responseRows, error: respError } = await supabase
     .from("assessment_responses")
     .select("dimension, question_index, score")
-    .eq("assessment_id", assessmentId)
-    .returns<{ dimension: string; question_index: number; score: number }[]>();
+    .eq("assessment_id", assessmentId);
 
   if (respError) throw new Error(`Could not load responses: ${respError.message}`);
 
@@ -101,7 +100,6 @@ export async function submitAssessment(assessmentId: string): Promise<number> {
     .update({ status: "complete", completed_at: new Date().toISOString() })
     .eq("id", assessmentId)
     .select("organization_id")
-    .returns<{ organization_id: string }[]>()
     .single();
 
   if (updateError || !assessment) {

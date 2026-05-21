@@ -24,7 +24,6 @@ export async function generateMetadata({
     .from("organizations")
     .select("name")
     .eq("slug", slug)
-    .returns<{ name: string }[]>()
     .single();
   return { title: data?.name ?? "Organization" };
 }
@@ -42,7 +41,6 @@ export default async function OrgDetailPage({
     .from("organizations")
     .select("*")
     .eq("slug", slug)
-    .returns<Organization[]>()
     .single();
 
   if (!org) notFound();
@@ -53,7 +51,6 @@ export default async function OrgDetailPage({
     .select("user_id, full_name, created_at")
     .eq("organization_id", org.id)
     .eq("role", "client")
-    .returns<{ user_id: string; full_name: string; created_at: string }[]>()
     .limit(1)
     .maybeSingle();
 

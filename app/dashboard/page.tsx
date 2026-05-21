@@ -26,7 +26,6 @@ export default async function DashboardPage() {
     .from("profiles")
     .select("*, organizations(*)")
     .eq("user_id", user?.id ?? "")
-    .returns<(Profile & { organizations: Organization })[]>()
     .single();
 
   const profile = profileRow as (Profile & { organizations: Organization }) | null;
@@ -46,7 +45,6 @@ export default async function DashboardPage() {
       .select("id")
       .eq("organization_id", org.id)
       .eq("status", "complete")
-      .returns<{ id: string }[]>()
       .order("completed_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -57,7 +55,6 @@ export default async function DashboardPage() {
         .from("dimension_scores")
         .select("dimension, raw_score, weighted_score")
         .eq("assessment_id", latestAssessment.id)
-        .returns<{ dimension: string; raw_score: number; weighted_score: number }[]>()
         .order("weighted_score", { ascending: false });
 
       dimScores = scores ?? [];

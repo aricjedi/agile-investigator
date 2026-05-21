@@ -26,7 +26,6 @@ export default async function AdminRouteLayout({
     .from("profiles")
     .select("role")
     .eq("user_id", user.id)
-    .returns<{ role: string }[]>()
     .single();
 
   if (profile?.role !== "admin") {

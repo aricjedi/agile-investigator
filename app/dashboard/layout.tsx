@@ -25,7 +25,6 @@ export default async function DashboardRouteLayout({
     .from("profiles")
     .select("role")
     .eq("user_id", user.id)
-    .returns<{ role: string }[]>()
     .single();
 
   // Admins who land on /dashboard get redirected to their own area.

@@ -1,5 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "@/types/database";
+import type { Database } from "@/types/supabase";
 
 // Browser-side Supabase client — safe to use in Client Components.
 // Reads cookies automatically via @supabase/ssr.

@@ -21,7 +21,6 @@ export default async function AdminDashboardPage() {
   const { data: orgs, error } = await supabase
     .from("organizations")
     .select("id, name, slug, status, health_score, created_at")
-    .returns<Organization[]>()
     .order("created_at", { ascending: false });
 
   const organizations: Organization[] = orgs ?? [];
