@@ -47,7 +47,7 @@ export default async function ClientLayout({
       icon:  "clipboard",
     },
     {
-      href:  "/dashboard/health-score",
+      href:  "/dashboard/trustq-score",
       label: "TrustQ Score",
       icon:  "chart-bar",
     },

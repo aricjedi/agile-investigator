@@ -108,17 +108,33 @@ export async function submitAssessment(assessmentId: string): Promise<number> {
     throw new Error(`Could not complete assessment: ${updateError?.message}`);
   }
 
-  // Update org health_score via admin client — organizations RLS restricts
-  // updates to admin-role users, but clients submit their own scores.
+  // Update org health_score and record longitudinal history via admin client.
+  // Organizations RLS restricts updates to admin-role users; score_history has
+  // no insert policy — both go through the service-role client.
   // TODO: replace with a security-definer SQL function once one is built.
   const admin = createAdminClient();
+
   await admin
     .from("organizations")
     .update({ health_score: totalScore })
     .eq("id", assessment.organization_id);
 
+  // Record score history (upsert is idempotent — unique constraint on assessment_id
+  // prevents duplicate rows if submitAssessment is ever called twice for the same id).
+  await admin
+    .from("score_history")
+    .upsert(
+      {
+        organization_id: assessment.organization_id,
+        assessment_id:   assessmentId,
+        trustq_score:    totalScore,
+        scored_at:       new Date().toISOString(),
+      } as unknown as never,
+      { onConflict: "assessment_id" }
+    );
+
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/health-score");
+  revalidatePath("/dashboard/trustq-score");
 
   return totalScore;
 }

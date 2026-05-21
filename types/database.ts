@@ -49,6 +49,15 @@ export interface AssessmentResponse {
   created_at:     string;
 }
 
+export interface ScoreHistory {
+  id:              string;
+  organization_id: string;
+  assessment_id:   string;
+  trustq_score:    number;
+  scored_at:       string;
+  notes:           string | null;
+}
+
 export interface DimensionScore {
   id:             string;
   assessment_id:  string;

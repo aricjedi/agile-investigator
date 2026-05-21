@@ -2,16 +2,19 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import type { Organization, Profile } from "@/types/database";
+import { TrustQScoreChart, type ScoreDataPoint } from "@/components/score/TrustQScoreChart";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 // ---------------------------------------------------------------------------
 // /dashboard — Client portal home.
 //
-// Shows: welcome header, TrustQ Score badge, strongest/weakest dimensions
-// (once an assessment is complete), and four feature cards.
+// Sections:
+//   1. Welcome header + current TrustQ Score badge with delta vs. previous
+//   2. Score history chart widget (or single-score message if only 1 assessment)
+//   3. Strongest / weakest dimension panels (post-assessment)
+//   4. Four feature cards
 //
-// TODO: replace TrustQ Score badge with trend chart once score history ships.
 // TODO: add upcoming action items / deadlines widget.
 // TODO: add org-scoped recent activity feed.
 // ---------------------------------------------------------------------------
@@ -26,6 +29,7 @@ export default async function DashboardPage() {
     .from("profiles")
     .select("*, organizations(*)")
     .eq("user_id", user?.id ?? "")
+    .returns<(Profile & { organizations: Organization })[]>()
     .single();
 
   const profile = profileRow as (Profile & { organizations: Organization }) | null;
@@ -34,12 +38,38 @@ export default async function DashboardPage() {
   // First name only for the welcome message
   const firstName = profile?.full_name?.trim().split(/\s+/)[0] ?? null;
 
-  // ---- Dimension scores for strongest/weakest display ----
-  // Only populated after at least one complete assessment.
+  // ---- Score history (ascending for chart) --------------------------------
+  let scoreHistory: { trustq_score: number; scored_at: string }[] = [];
+
+  if (org?.id) {
+    const { data: histRows } = await supabase
+      .from("score_history")
+      .select("trustq_score, scored_at")
+      .eq("organization_id", org.id)
+      .order("scored_at", { ascending: true })
+      .returns<{ trustq_score: number; scored_at: string }[]>();
+
+    scoreHistory = histRows ?? [];
+  }
+
+  const chartData: ScoreDataPoint[] = scoreHistory.map((h) => ({
+    date:  h.scored_at,
+    score: Math.round(h.trustq_score),
+  }));
+
+  const currentScore  = scoreHistory.at(-1)?.trustq_score ?? null;
+  const previousScore = scoreHistory.length >= 2
+    ? scoreHistory.at(-2)!.trustq_score
+    : null;
+  const scoreDelta =
+    currentScore !== null && previousScore !== null
+      ? Math.round(currentScore - previousScore)
+      : null;
+
+  // ---- Dimension scores for strongest/weakest display ---------------------
   let dimScores: { dimension: string; raw_score: number; weighted_score: number }[] = [];
 
   if (org?.id) {
-    // Get the most recently completed assessment for this org
     const { data: latestAssessment } = await supabase
       .from("assessments")
       .select("id")
@@ -51,7 +81,6 @@ export default async function DashboardPage() {
       .maybeSingle();
 
     if (latestAssessment) {
-      // Fetch all dimension scores, sorted best → worst by weighted score
       const { data: scores } = await supabase
         .from("dimension_scores")
         .select("dimension, raw_score, weighted_score")
@@ -66,8 +95,8 @@ export default async function DashboardPage() {
   const strongest = dimScores.slice(0, 3);
   const weakest   = [...dimScores].reverse().slice(0, 3);
 
-  // ---- Feature cards ----
-  // TODO: flip live=true as each feature ships and remove the coming-soon state.
+  // ---- Feature cards ------------------------------------------------------
+  // TODO: flip live=true for Metrics Dashboard and Document Review as each ships.
   const features: FeatureCardProps[] = [
     {
       label:       "Diagnostic Assessment",
@@ -78,10 +107,10 @@ export default async function DashboardPage() {
     },
     {
       label:       "TrustQ Score",
-      href:        "/dashboard/health-score",
-      description: "View your organization's TrustQ Score and the dimensions that drive it.",
+      href:        "/dashboard/trustq-score",
+      description: "View your organization's TrustQ Score history and the dimensions that drive it.",
       icon:        "chart-bar",
-      live:        false,
+      live:        true,
     },
     {
       label:       "Metrics Dashboard",
@@ -113,26 +142,39 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* TrustQ Score badge */}
+        {/* Current TrustQ Score badge */}
         <div className="text-right shrink-0">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
             TrustQ Score
           </p>
-          {org?.health_score !== null && org?.health_score !== undefined ? (
+          {currentScore !== null ? (
             <div>
               <p
-                className={`text-3xl font-bold ${
-                  org.health_score >= 71
+                className={`text-3xl font-bold tabular-nums ${
+                  currentScore >= 71
                     ? "text-green-600"
-                    : org.health_score >= 41
+                    : currentScore >= 41
                     ? "text-yellow-500"
                     : "text-red-500"
                 }`}
               >
-                {org.health_score}
+                {Math.round(currentScore)}
                 <span className="text-base font-normal text-gray-400"> / 100</span>
               </p>
-              {/* TODO: show delta vs. previous period once score history table ships */}
+              {scoreDelta !== null && (
+                <p
+                  className={`text-xs font-semibold mt-0.5 ${
+                    scoreDelta > 0
+                      ? "text-green-600"
+                      : scoreDelta < 0
+                      ? "text-red-500"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {scoreDelta > 0 ? "▲ +" : scoreDelta < 0 ? "▼ " : ""}
+                  {scoreDelta !== 0 ? scoreDelta : "No change"} vs. previous
+                </p>
+              )}
             </div>
           ) : (
             <div>
@@ -150,12 +192,55 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* ---- Score history chart widget ---- */}
+      {scoreHistory.length === 1 && (
+        <div className="rounded-xl bg-white border border-gray-200 px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-1">
+            Score history
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Complete another assessment to track progress over time.{" "}
+            <Link
+              href="/dashboard/assessment"
+              className="text-brand-600 hover:underline font-medium"
+            >
+              Start next assessment →
+            </Link>
+          </p>
+        </div>
+      )}
+
+      {scoreHistory.length >= 2 && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-700">Score history</h2>
+            <Link
+              href="/dashboard/trustq-score"
+              className="text-xs font-medium text-brand-600 hover:underline"
+            >
+              View full history →
+            </Link>
+          </div>
+          <div className="rounded-xl bg-white border border-gray-200 px-4 pt-4 pb-2">
+            <TrustQScoreChart data={chartData} height={180} compact />
+          </div>
+        </section>
+      )}
+
       {/* ---- Strongest / weakest dimensions (post-assessment only) ---- */}
       {dimScores.length > 0 && (
         <section>
-          <h2 className="text-base font-semibold text-gray-700 mb-4">
-            Assessment results
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-gray-700">
+              Assessment results
+            </h2>
+            <Link
+              href="/dashboard/trustq-score"
+              className="text-xs font-medium text-brand-600 hover:underline"
+            >
+              Full breakdown →
+            </Link>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
             {/* Strongest */}
@@ -193,7 +278,6 @@ export default async function DashboardPage() {
             </div>
 
           </div>
-          {/* TODO: add "View full breakdown" link once /dashboard/health-score is built */}
         </section>
       )}
 

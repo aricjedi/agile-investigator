@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Organization } from "@/types/database";
+import { ScoreSparkline, type SparkDataPoint } from "@/components/score/ScoreSparkline";
 
 // ---------------------------------------------------------------------------
 // /admin/organizations/[slug] — Organization detail page.
@@ -24,6 +25,7 @@ export async function generateMetadata({
     .from("organizations")
     .select("name")
     .eq("slug", slug)
+    .returns<{ name: string }[]>()
     .single();
   return { title: data?.name ?? "Organization" };
 }
@@ -41,9 +43,39 @@ export default async function OrgDetailPage({
     .from("organizations")
     .select("*")
     .eq("slug", slug)
+    .returns<Organization[]>()
     .single();
 
   if (!org) notFound();
+
+  // ---- Fetch score history (ascending for sparkline) ---------------------
+  const { data: histRows } = await supabase
+    .from("score_history")
+    .select("trustq_score, scored_at")
+    .eq("organization_id", org.id)
+    .order("scored_at", { ascending: true })
+    .returns<{ trustq_score: number; scored_at: string }[]>();
+
+  const scoreHistory = histRows ?? [];
+  const sparkData: SparkDataPoint[] = scoreHistory.map((h) => ({
+    date:  h.scored_at,
+    score: Math.round(h.trustq_score),
+  }));
+
+  const currentScore  = scoreHistory.at(-1)?.trustq_score ?? null;
+  const previousScore = scoreHistory.length >= 2
+    ? scoreHistory.at(-2)!.trustq_score
+    : null;
+  const scoreDelta =
+    currentScore !== null && previousScore !== null
+      ? Math.round(currentScore - previousScore)
+      : null;
+
+  // Trend direction for icon
+  const trend: "up" | "down" | "flat" | null =
+    scoreDelta === null ? null :
+    scoreDelta > 0 ? "up" :
+    scoreDelta < 0 ? "down" : "flat";
 
   // ---- Fetch primary contact profile (first client in this org) ----------
   const { data: contact } = await supabase
@@ -52,6 +84,7 @@ export default async function OrgDetailPage({
     .eq("organization_id", org.id)
     .eq("role", "client")
     .limit(1)
+    .returns<{ user_id: string; full_name: string; created_at: string }[]>()
     .maybeSingle();
 
   // ---- Fetch contact email from auth.users via admin API -----------------
@@ -70,8 +103,7 @@ export default async function OrgDetailPage({
   });
 
   // ---- Feature status placeholders ---------------------------------------
-  // TODO: replace "Not started" with real status from assessment/metrics tables
-  //       once those features are built.
+  // TODO: replace "Not started" with real status from assessment/metrics tables.
   const features = [
     {
       label:       "Diagnostic Assessment",
@@ -150,28 +182,37 @@ export default async function OrgDetailPage({
           )}
         </div>
 
-        {/* TrustQ Score */}
+        {/* TrustQ Score + trend */}
         <div className="rounded-xl bg-white border border-gray-200 px-5 py-4 flex flex-col gap-1">
           <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
             TrustQ Score
           </p>
-          {org.health_score !== null ? (
-            <p
-              className={`text-3xl font-bold mt-1 ${
-                org.health_score >= 75
-                  ? "text-green-600"
-                  : org.health_score >= 50
-                  ? "text-yellow-500"
-                  : "text-red-500"
-              }`}
-            >
-              {org.health_score}
-              <span className="text-base font-normal text-gray-400"> / 100</span>
-            </p>
+          {currentScore !== null ? (
+            <>
+              <div className="flex items-baseline gap-2 mt-1">
+                <p
+                  className={`text-3xl font-bold tabular-nums ${
+                    currentScore >= 71
+                      ? "text-green-600"
+                      : currentScore >= 50
+                      ? "text-yellow-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {Math.round(currentScore)}
+                  <span className="text-base font-normal text-gray-400"> / 100</span>
+                </p>
+                {trend && <TrendIcon trend={trend} delta={scoreDelta!} />}
+              </div>
+              {previousScore !== null && (
+                <p className="text-xs text-gray-400">
+                  Previous: {Math.round(previousScore)}
+                </p>
+              )}
+            </>
           ) : (
             <p className="text-sm text-gray-400 italic mt-1">Not yet scored</p>
           )}
-          {/* TODO: show score date and trend once scoring engine is built */}
         </div>
 
         {/* Created date */}
@@ -184,6 +225,28 @@ export default async function OrgDetailPage({
         </div>
 
       </div>
+
+      {/* ---- Score history sparkline ---- */}
+      {sparkData.length > 0 && (
+        <section className="rounded-xl bg-white border border-gray-200 px-5 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+              Score history
+            </p>
+            <span className="text-xs text-gray-400">
+              {scoreHistory.length} assessment{scoreHistory.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          {sparkData.length === 1 ? (
+            <p className="text-xs text-gray-400 italic py-1">
+              Only one assessment completed — chart will appear after the next submission.
+            </p>
+          ) : (
+            <ScoreSparkline data={sparkData} />
+          )}
+          {/* TODO: link to admin-scoped full score history view once that page is built */}
+        </section>
+      )}
 
       {/* ---- Feature status cards ---- */}
       <section className="flex flex-col gap-3">
@@ -236,6 +299,21 @@ function StatusChip({ status }: { status: "Not started" }) {
   return (
     <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">
       {status}
+    </span>
+  );
+}
+
+function TrendIcon({ trend, delta }: { trend: "up" | "down" | "flat"; delta: number }) {
+  if (trend === "flat") {
+    return <span className="text-xs text-gray-400">±0</span>;
+  }
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 text-xs font-semibold ${
+        trend === "up" ? "text-green-600" : "text-red-500"
+      }`}
+    >
+      {trend === "up" ? "▲" : "▼"} {Math.abs(delta)}
     </span>
   );
 }

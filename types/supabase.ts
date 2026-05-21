@@ -183,6 +183,52 @@ export type Database = {
       }
 
       // -----------------------------------------------------------------------
+      // score_history
+      // -----------------------------------------------------------------------
+      score_history: {
+        Row: {
+          id:              string
+          organization_id: string
+          assessment_id:   string
+          trustq_score:    number
+          scored_at:       string
+          notes:           string | null
+        }
+        Insert: {
+          id?:              string
+          organization_id:  string
+          assessment_id:    string
+          trustq_score:     number
+          scored_at?:       string
+          notes?:           string | null
+        }
+        Update: {
+          id?:              string
+          organization_id?: string
+          assessment_id?:   string
+          trustq_score?:    number
+          scored_at?:       string
+          notes?:           string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "score_history_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: true
+            referencedRelation: "assessments"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+
+      // -----------------------------------------------------------------------
       // dimension_scores
       // -----------------------------------------------------------------------
       dimension_scores: {
