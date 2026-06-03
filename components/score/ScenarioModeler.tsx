@@ -157,102 +157,98 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
   );
 
   return (
-    <div className="flex flex-col gap-8 max-w-4xl">
+    <div className="flex flex-col gap-4 max-w-5xl">
 
       {/* ---- Header ---- */}
       <div>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Scenario Modeler
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Project your TrustQ Score under different program investment scenarios.
-              Adjust each dimension&rsquo;s projected maturity level to see score impact in real time.
+        <h1 className="text-2xl font-semibold text-gray-900">Scenario Modeler</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Project your TrustQ Score under different program investment scenarios.
+          Adjust each dimension&rsquo;s projected maturity level to see score impact in real time.
+        </p>
+      </div>
+
+      {/* ---- Two-column layout: sticky left panel + scrollable sliders ---- */}
+      <div className="flex gap-6 items-start">
+
+        {/* LEFT: sticky score panel */}
+        <div className="w-56 shrink-0 sticky top-6 flex flex-col gap-4">
+
+          {/* Sandbox notice */}
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 flex items-start gap-2">
+            <svg className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
+            </svg>
+            <p className="text-[11px] text-amber-800 leading-snug">
+              <span className="font-semibold">Sandbox only.</span> No data is saved. Your official TrustQ Score is not affected.
             </p>
           </div>
+
+          {/* Baseline score */}
+          <div className="rounded-xl bg-white border border-gray-200 px-4 py-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+              Current Baseline
+            </p>
+            <div className="flex items-baseline gap-1.5">
+              <span className={`text-4xl font-bold tabular-nums ${scoreColor(displayBaseline)}`}>
+                {displayBaseline}
+              </span>
+              <span className="text-sm text-gray-400">/ 100</span>
+            </div>
+            <span className={`mt-1.5 inline-block text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${scoreBadgeClass(displayBaseline)}`}>
+              {scoreLabel(displayBaseline)}
+            </span>
+            {baseline.length === 0 && (
+              <p className="mt-2 text-[10px] text-gray-400 leading-snug">No assessment on file — all dimensions default to 1.0.</p>
+            )}
+          </div>
+
+          {/* Projected score */}
+          <div className={`rounded-xl border-2 px-4 py-4 transition-colors ${
+            delta > 0 ? "bg-green-50 border-green-300" :
+            delta < 0 ? "bg-red-50 border-red-300" :
+                        "bg-white border-gray-200"
+          }`}>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+              Projected Score
+            </p>
+            <div className="flex items-baseline gap-1.5">
+              <span className={`text-4xl font-bold tabular-nums ${scoreColor(projectedTotal)}`}>
+                {projectedTotal}
+              </span>
+              <span className="text-sm text-gray-400">/ 100</span>
+            </div>
+            <span className={`mt-1.5 inline-block text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${scoreBadgeClass(projectedTotal)}`}>
+              {scoreLabel(projectedTotal)}
+            </span>
+            {hasChanges && (
+              <p className={`mt-2 text-sm font-bold tabular-nums ${delta > 0 ? "text-green-700" : "text-red-600"}`}>
+                {delta > 0 ? "▲ +" : "▼ "}{delta} pts
+              </p>
+            )}
+          </div>
+
+          {/* Reset button */}
           {hasChanges && (
             <button
               onClick={resetAll}
-              className="shrink-0 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+              className="w-full rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors"
             >
               Reset to baseline
             </button>
           )}
         </div>
 
-        {/* Sandbox notice */}
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 flex items-start gap-3">
-          <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z" />
-          </svg>
-          <p className="text-xs text-amber-800">
-            <span className="font-semibold">Sandbox only.</span> This modeler projects hypothetical scores based on your inputs.
-            No data is saved and your official TrustQ Score is not affected.
-          </p>
-        </div>
-      </div>
-
-      {/* ---- Score hero: baseline vs. projected ---- */}
-      <div className="grid grid-cols-2 gap-4">
-
-        {/* Baseline */}
-        <div className="rounded-xl bg-white border border-gray-200 px-6 py-5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-            Current Baseline
-          </p>
-          <div className="flex items-baseline gap-2">
-            <span className={`text-4xl font-bold tabular-nums ${scoreColor(displayBaseline)}`}>
-              {displayBaseline}
-            </span>
-            <span className="text-sm text-gray-400">/ 100</span>
-            <span className={`ml-1 text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${scoreBadgeClass(displayBaseline)}`}>
-              {scoreLabel(displayBaseline)}
-            </span>
-          </div>
-          {baseline.length === 0 && (
-            <p className="mt-2 text-xs text-gray-400">No assessment on file — all dimensions default to 1.0 (Absent).</p>
-          )}
-        </div>
-
-        {/* Projected */}
-        <div className={`rounded-xl border-2 px-6 py-5 transition-colors ${
-          delta > 0  ? "bg-green-50 border-green-300" :
-          delta < 0  ? "bg-red-50 border-red-300" :
-                       "bg-white border-gray-200"
-        }`}>
-          <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
-            Projected Score
-          </p>
-          <div className="flex items-baseline gap-2">
-            <span className={`text-4xl font-bold tabular-nums ${scoreColor(projectedTotal)}`}>
-              {projectedTotal}
-            </span>
-            <span className="text-sm text-gray-400">/ 100</span>
-            <span className={`ml-1 text-xs font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${scoreBadgeClass(projectedTotal)}`}>
-              {scoreLabel(projectedTotal)}
-            </span>
-          </div>
-          {hasChanges && (
-            <p className={`mt-1.5 text-sm font-semibold tabular-nums ${delta > 0 ? "text-green-700" : "text-red-600"}`}>
-              {delta > 0 ? "▲ +" : "▼ "}
-              {delta} points vs. baseline
+        {/* RIGHT: sliders */}
+        <div className="flex-1 min-w-0 flex flex-col gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-700">Dimension targets</h2>
+            <p className="text-xs text-gray-400 mt-0.5">
+              1 = Absent → 5 = Embedded. Higher-weight dimensions drive more score movement per point.
             </p>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* ---- Dimension sliders ---- */}
-      <section>
-        <h2 className="text-base font-semibold text-gray-700 mb-1">
-          Dimension targets
-        </h2>
-        <p className="text-xs text-gray-400 mb-5">
-          Drag each slider to set the projected maturity level (1 = Absent → 5 = Embedded).
-          Dimensions with higher weights drive more score movement per point of improvement.
-        </p>
-
-        <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
           {DIMENSIONS.map((dim) => {
             const base      = baselineMap[dim.name] ?? 1;
             const proj      = projected[dim.name] ?? 1;
@@ -329,8 +325,9 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
               </div>
             );
           })}
-        </div>
-      </section>
+          </div>
+        </div>{/* end sliders */}
+      </div>{/* end two-column */}
 
       {/* ---- Highest-impact opportunities ---- */}
       <section>
@@ -379,6 +376,6 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
         </p>
       </section>
 
-    </div>
+    </div>{/* end outer flex col */}
   );
 }
