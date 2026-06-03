@@ -127,53 +127,7 @@ export function generateScenarioReport(input: ReportInput): void {
   doc.line(ML, y, ML + CW, y);
   y += 7;
 
-  // =========================================================================
-  // Score cards
-  // =========================================================================
-  const cardW = (CW - 6) / 2;
-
-  // Baseline card
-  doc.setFillColor(249, 250, 251);
-  doc.setDrawColor(...GRAY200);
-  doc.setLineWidth(0.3);
-  doc.roundedRect(ML, y, cardW, 28, 2, 2, "FD");
-  doc.setTextColor(...GRAY500);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.text("CURRENT BASELINE", ML + 5, y + 7);
-  const baseColor = baselineTotal >= 71 ? GREEN : baselineTotal >= 41 ? AMBER : RED;
-  doc.setTextColor(...baseColor);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
-  doc.text(String(baselineTotal), ML + 5, y + 20);
-  doc.setFontSize(10);
-  doc.text("/ 100  " + scoreBand(baselineTotal), ML + 5 + doc.getTextWidth(String(baselineTotal)) + 1, y + 20);
-
-  // Projected card
-  const px = ML + cardW + 6;
   const delta = projectedTotal - baselineTotal;
-  const projBorder = delta > 0 ? GREEN : delta < 0 ? RED : GRAY200;
-  doc.setFillColor(
-    delta > 0 ? 240 : delta < 0 ? 254 : 249,
-    delta > 0 ? 253 : delta < 0 ? 242 : 250,
-    delta > 0 ? 244 : delta < 0 ? 242 : 251
-  );
-  doc.setDrawColor(...projBorder);
-  doc.setLineWidth(0.6);
-  doc.roundedRect(px, y, cardW, 28, 2, 2, "FD");
-  doc.setTextColor(...GRAY500);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.text("PROJECTED SCORE", px + 5, y + 7);
-  const projColor = projectedTotal >= 71 ? GREEN : projectedTotal >= 41 ? AMBER : RED;
-  doc.setTextColor(...projColor);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
-  doc.text(String(projectedTotal), px + 5, y + 20);
-  doc.setFontSize(10);
-  doc.text("/ 100  " + scoreBand(projectedTotal), px + 5 + doc.getTextWidth(String(projectedTotal)) + 1, y + 20);
-
-  y += 35;
 
   // =========================================================================
   // Narrative summary
