@@ -18,6 +18,7 @@
 // ---------------------------------------------------------------------------
 
 import { useState, useMemo } from "react";
+import { generateScenarioReport } from "@/lib/report/generateScenarioReport";
 
 // Dimension definitions — mirrors lib/assessment/questions.ts weights exactly.
 // Labels include a "resource driver" note for use in budget conversations.
@@ -117,9 +118,11 @@ interface Props {
   baseline: BaselineDimension[];
   /** 0–100 TrustQ Score from the most recent real assessment. null if none. */
   baselineTotal: number | null;
+  orgName?: string;
+  userFullName?: string;
 }
 
-export function ScenarioModeler({ baseline, baselineTotal }: Props) {
+export function ScenarioModeler({ baseline, baselineTotal, orgName = "Your Organization", userFullName }: Props) {
   // Build a lookup from baseline data; default to 1.0 (Absent) for any missing dim.
   const baselineMap = useMemo(() => {
     const m: Record<string, number> = {};
@@ -156,16 +159,43 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
       a.weight * (5 - (projected[a.name] ?? 1))
   );
 
+  function handleExport() {
+    generateScenarioReport({
+      orgName,
+      baselineTotal:  displayBaseline,
+      projectedTotal,
+      generatedBy:    userFullName,
+      dimensions: DIMENSIONS.map((d) => ({
+        name:           d.name,
+        weight:         d.weight,
+        baseline:       baselineMap[d.name] ?? 1,
+        projected:      projected[d.name] ?? 1,
+        resourceDriver: d.resourceDriver,
+      })),
+    });
+  }
+
   return (
     <div className="flex flex-col gap-4 max-w-5xl">
 
       {/* ---- Header ---- */}
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Scenario Modeler</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Project your TrustQ Score under different program investment scenarios.
-          Adjust each dimension&rsquo;s projected maturity level to see score impact in real time.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Scenario Modeler</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Project your TrustQ Score under different program investment scenarios.
+            Adjust each dimension&rsquo;s projected maturity level to see score impact in real time.
+          </p>
+        </div>
+        <button
+          onClick={handleExport}
+          className="shrink-0 flex items-center gap-2 rounded-md bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700 transition-colors shadow-sm"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export Investment Brief
+        </button>
       </div>
 
       {/* ---- Two-column layout: fixed left panel + scrollable right ---- */}

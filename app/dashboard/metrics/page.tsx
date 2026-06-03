@@ -78,6 +78,8 @@ export default async function MetricsDashboardPage() {
     <ScenarioModeler
       baseline={baselineDims}
       baselineTotal={baselineTotal}
+      orgName={org?.name ?? "Your Organization"}
+      userFullName={profileRow?.full_name ?? undefined}
     />
   );
 }
