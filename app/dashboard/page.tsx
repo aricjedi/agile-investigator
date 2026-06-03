@@ -113,11 +113,11 @@ export default async function DashboardPage() {
       live:        true,
     },
     {
-      label:       "Metrics Dashboard",
+      label:       "Scenario Modeler",
       href:        "/dashboard/metrics",
-      description: "Track key performance indicators across your investigations lifecycle.",
+      description: "Project your TrustQ Score under different program investment scenarios.",
       icon:        "chart-line",
-      live:        false,
+      live:        true,
     },
     {
       label:       "Document Review",
