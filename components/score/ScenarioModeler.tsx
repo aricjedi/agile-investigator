@@ -326,8 +326,8 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
             );
           })}
           </div>
-        </div>{/* end sliders */}
-      </div>{/* end two-column */}
+        </div>
+      </div>
 
       {/* ---- Highest-impact opportunities ---- */}
       <section>
@@ -376,6 +376,6 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
         </p>
       </section>
 
-    </div>{/* end outer flex col */}
+    </div>
   );
 }
