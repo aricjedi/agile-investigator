@@ -168,11 +168,11 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
         </p>
       </div>
 
-      {/* ---- Two-column layout: sticky left panel + scrollable sliders ---- */}
-      <div className="flex gap-6 items-start">
+      {/* ---- Two-column layout: fixed left panel + scrollable right ---- */}
+      <div className="flex gap-6" style={{ height: "calc(100vh - 11rem)" }}>
 
-        {/* LEFT: sticky score panel */}
-        <div className="w-56 shrink-0 sticky top-6 flex flex-col gap-4">
+        {/* LEFT: fixed score panel — does not scroll */}
+        <div className="w-56 shrink-0 flex flex-col gap-4 overflow-y-auto">
 
           {/* Sandbox notice */}
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 flex items-start gap-2">
@@ -239,8 +239,8 @@ export function ScenarioModeler({ baseline, baselineTotal }: Props) {
           )}
         </div>
 
-        {/* RIGHT: sliders */}
-        <div className="flex-1 min-w-0 flex flex-col gap-3">
+        {/* RIGHT: sliders + impact table — scrolls independently */}
+        <div className="flex-1 min-w-0 flex flex-col gap-3 overflow-y-auto pr-1">
           <div>
             <h2 className="text-sm font-semibold text-gray-700">Dimension targets</h2>
             <p className="text-xs text-gray-400 mt-0.5">
