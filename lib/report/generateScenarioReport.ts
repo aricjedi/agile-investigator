@@ -90,14 +90,14 @@ export interface ReportInput {
 }
 
 // ---- Colours ---------------------------------------------------------------
-const BRAND   = [30,  64, 175] as const; // brand-700 blue
-const GREEN   = [22, 101,  52] as const;
-const RED     = [185,  28,  28] as const;
-const AMBER   = [146,  64,  14] as const;
-const GRAY900 = [17,  24,  39] as const;
-const GRAY500 = [107, 114, 128] as const;
-const GRAY200 = [229, 231, 235] as const;
-const WHITE   = [255, 255, 255] as const;
+const BRAND:   [number,number,number] = [30,  64, 175];
+const GREEN:   [number,number,number] = [22, 101,  52];
+const RED:     [number,number,number] = [185,  28,  28];
+const AMBER:   [number,number,number] = [146,  64,  14];
+const GRAY900: [number,number,number] = [17,  24,  39];
+const GRAY500: [number,number,number] = [107, 114, 128];
+const GRAY200: [number,number,number] = [229, 231, 235];
+const WHITE:   [number,number,number] = [255, 255, 255];
 
 // ---- Main export -----------------------------------------------------------
 export function generateScenarioReport(input: ReportInput): void {
