@@ -105,6 +105,7 @@ export type Database = {
           status:          "draft" | "complete"
           created_at:      string
           completed_at:    string | null
+          org_profile_id:  string | null
         }
         Insert: {
           id?:              string
@@ -113,6 +114,7 @@ export type Database = {
           status?:          "draft" | "complete"
           created_at?:      string
           completed_at?:    string | null
+          org_profile_id?:  string | null
         }
         Update: {
           id?:              string
@@ -121,6 +123,7 @@ export type Database = {
           status?:          "draft" | "complete"
           created_at?:      string
           completed_at?:    string | null
+          org_profile_id?:  string | null
         }
         Relationships: [
           {
@@ -229,6 +232,57 @@ export type Database = {
       }
 
       // -----------------------------------------------------------------------
+      // org_profiles
+      // -----------------------------------------------------------------------
+      org_profiles: {
+        Row: {
+          id:                   string
+          organization_id:      string
+          headcount:            "small" | "mid" | "large"
+          geographic_scope:     "single" | "multi"
+          consequence_severity: "low" | "moderate" | "high"
+          regulated:            boolean
+          case_volume:          "low" | "moderate" | "high"
+          industry:             string | null
+          created_at:           string
+          updated_at:           string
+        }
+        Insert: {
+          id?:                   string
+          organization_id:       string
+          headcount:             "small" | "mid" | "large"
+          geographic_scope:      "single" | "multi"
+          consequence_severity:  "low" | "moderate" | "high"
+          regulated?:            boolean
+          case_volume:           "low" | "moderate" | "high"
+          industry?:             string | null
+          created_at?:           string
+          updated_at?:           string
+        }
+        Update: {
+          id?:                   string
+          organization_id?:      string
+          headcount?:            "small" | "mid" | "large"
+          geographic_scope?:     "single" | "multi"
+          consequence_severity?: "low" | "moderate" | "high"
+          regulated?:            boolean
+          case_volume?:          "low" | "moderate" | "high"
+          industry?:             string | null
+          created_at?:           string
+          updated_at?:           string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+
+      // -----------------------------------------------------------------------
       // dimension_scores
       // -----------------------------------------------------------------------
       dimension_scores: {
@@ -239,6 +293,11 @@ export type Database = {
           raw_score:      number
           weighted_score: number
           weight:         number
+          current_score:  number | null
+          target:         number | null
+          ratio:          number | null
+          contribution:   number | null
+          gap:            number | null
           created_at:     string
         }
         Insert: {
@@ -248,6 +307,11 @@ export type Database = {
           raw_score:      number
           weighted_score: number
           weight:         number
+          current_score?: number | null
+          target?:        number | null
+          ratio?:         number | null
+          contribution?:  number | null
+          gap?:           number | null
           created_at?:    string
         }
         Update: {
@@ -257,6 +321,11 @@ export type Database = {
           raw_score?:      number
           weighted_score?: number
           weight?:         number
+          current_score?:  number | null
+          target?:         number | null
+          ratio?:          number | null
+          contribution?:   number | null
+          gap?:            number | null
           created_at?:     string
         }
         Relationships: [
