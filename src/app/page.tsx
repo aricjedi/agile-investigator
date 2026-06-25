@@ -1,11 +1,11 @@
 import Link from 'next/link'
 
 const modules = [
-  { code: 'A', name: 'ALIGN',     desc: 'Scope the investigation, establish authority, and identify stakeholders' },
-  { code: 'G', name: 'GATHER',    desc: 'Collect and preserve evidence using systematic, defensible methods' },
-  { code: 'I', name: 'INTERVIEW', desc: 'Conduct PEACE-model interviews with precision, structure, and fairness' },
-  { code: 'L', name: 'LEAD',      desc: 'Analyze facts, apply standards, and weigh credibility' },
-  { code: 'E', name: 'EXECUTE',   desc: 'Draft findings, conclusions, and defensible reports' },
+  { code: 'A', name: 'ALIGN',       desc: 'Establish authority, set the scope, and orient the investigation' },
+  { code: 'G', name: 'GROUND',      desc: 'Ground the investigation — scope, stakeholders, sources, timeline, and risk' },
+  { code: 'I', name: 'INVESTIGATE', desc: 'Gather and verify evidence, map relationships, and probe for gaps' },
+  { code: 'L', name: 'LINK',        desc: 'Link the evidence — analyze, compare, assess credibility, and synthesize' },
+  { code: 'E', name: 'EXECUTE',     desc: 'Execute the report — findings, conclusions, and defensible documentation' },
 ]
 
 export default function LandingPage() {
