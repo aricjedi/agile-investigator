@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import type { Lesson, Module } from '@/lib/types'
+import type { Module } from '@/lib/types'
+import QuizPageClient from './QuizPageClient'
 
 export default async function LessonPage({
   params,
@@ -22,7 +23,6 @@ export default async function LessonPage({
 
   if (!course) notFound()
 
-  // Check enrollment
   const { data: enrollment } = await supabase
     .from('enrollments')
     .select('id')
@@ -42,7 +42,6 @@ export default async function LessonPage({
 
   const mod = lesson.module as Module
 
-  // Get sibling lessons for navigation
   const { data: siblings } = await supabase
     .from('lessons')
     .select('id, title, order_index')
@@ -61,6 +60,32 @@ export default async function LessonPage({
     .single()
 
   const isCompleted = progress?.completed ?? false
+
+  // For quiz lessons — fetch quiz data and prior responses
+  let quizData = null
+  let priorResponses: { question_id: string; selected_option_id: string; is_correct: boolean }[] = []
+
+  if (lesson.lesson_type === 'quiz') {
+    const { data: quiz } = await supabase
+      .from('quizzes')
+      .select('id, title, quiz_questions(id, question, order_index, quiz_options(id, option_text, is_correct, order_index))')
+      .eq('lesson_id', lessonId)
+      .single()
+
+    quizData = quiz
+
+    if (quiz) {
+      const questionIds = (quiz.quiz_questions ?? []).map((q: { id: string }) => q.id)
+      if (questionIds.length > 0) {
+        const { data: responses } = await supabase
+          .from('quiz_responses')
+          .select('question_id, selected_option_id, is_correct')
+          .eq('user_id', user.id)
+          .in('question_id', questionIds)
+        priorResponses = responses ?? []
+      }
+    }
+  }
 
   async function markComplete() {
     'use server'
@@ -82,7 +107,6 @@ export default async function LessonPage({
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Nav */}
       <header style={{ backgroundColor: '#1e2d40' }} className="px-6 py-3.5 flex items-center justify-between">
         <Link href={`/course/${slug}`} className="text-white font-semibold text-base tracking-wide">
           The Agile Investigator
@@ -93,75 +117,86 @@ export default async function LessonPage({
       </header>
 
       <div className="flex flex-1">
-        {/* Main content */}
         <main className="flex-1 px-6 py-10 max-w-3xl mx-auto w-full">
-          {/* Breadcrumb */}
           <p className="text-xs text-slate-400 mb-6 uppercase tracking-wide font-medium">
             {mod.title}
           </p>
 
           <h1 className="text-2xl font-bold text-slate-900 mb-6">{lesson.title}</h1>
 
-          {/* Video */}
-          {lesson.video_url && (
-            <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden mb-8">
-              <iframe
-                src={lesson.video_url}
-                className="w-full h-full"
-                allowFullScreen
-                title={lesson.title}
-              />
-            </div>
-          )}
-
-          {/* Text content */}
-          {lesson.content && (
-            <div
-              className="prose prose-slate max-w-none text-slate-700 leading-relaxed mb-10"
-              dangerouslySetInnerHTML={{ __html: lesson.content }}
-            />
-          )}
-
-          {/* Complete / navigation */}
-          <div className="border-t border-slate-200 pt-8 flex items-center justify-between">
-            <div>
-              {prev ? (
-                <Link
-                  href={`/course/${slug}/${prev.id}`}
-                  className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
-                >
-                  &larr; {prev.title}
-                </Link>
-              ) : (
-                <span />
+          {/* VIDEO lesson */}
+          {lesson.lesson_type === 'video' && (
+            <>
+              {lesson.video_url && (
+                <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden mb-8">
+                  <iframe
+                    src={lesson.video_url}
+                    className="w-full h-full"
+                    allowFullScreen
+                    title={lesson.title}
+                  />
+                </div>
               )}
-            </div>
-
-            {isCompleted ? (
-              <div className="flex items-center gap-3">
-                <span style={{ color: '#c9a84c' }} className="text-sm font-medium">Completed</span>
-                {next && (
-                  <Link
-                    href={`/course/${slug}/${next.id}`}
-                    style={{ backgroundColor: '#1e2d40' }}
-                    className="text-white text-sm font-semibold px-5 py-2 rounded-md hover:opacity-90 transition-opacity"
-                  >
-                    Next &rarr;
-                  </Link>
+              {!lesson.video_url && (
+                <div className="aspect-video bg-slate-100 rounded-lg flex items-center justify-center mb-8 border border-slate-200">
+                  <p className="text-slate-400 text-sm">Video coming soon</p>
+                </div>
+              )}
+              {lesson.content && (
+                <div
+                  className="prose prose-slate max-w-none text-slate-700 leading-relaxed mb-10"
+                  dangerouslySetInnerHTML={{ __html: lesson.content }}
+                />
+              )}
+              <div className="border-t border-slate-200 pt-8 flex items-center justify-between">
+                <div>
+                  {prev ? (
+                    <Link href={`/course/${slug}/${prev.id}`} className="text-sm text-slate-500 hover:text-slate-700 transition-colors">
+                      &larr; {prev.title}
+                    </Link>
+                  ) : <span />}
+                </div>
+                {isCompleted ? (
+                  <div className="flex items-center gap-3">
+                    <span style={{ color: '#c9a84c' }} className="text-sm font-medium">Completed</span>
+                    {next && (
+                      <Link
+                        href={`/course/${slug}/${next.id}`}
+                        style={{ backgroundColor: '#1e2d40' }}
+                        className="text-white text-sm font-semibold px-5 py-2 rounded-md hover:opacity-90 transition-opacity"
+                      >
+                        Next &rarr;
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <form action={markComplete}>
+                    <button
+                      type="submit"
+                      style={{ backgroundColor: '#1e2d40' }}
+                      className="text-white text-sm font-semibold px-5 py-2 rounded-md hover:opacity-90 transition-opacity"
+                    >
+                      {next ? 'Mark Complete & Continue' : 'Mark Complete'}
+                    </button>
+                  </form>
                 )}
               </div>
-            ) : (
-              <form action={markComplete}>
-                <button
-                  type="submit"
-                  style={{ backgroundColor: '#1e2d40' }}
-                  className="text-white text-sm font-semibold px-5 py-2 rounded-md hover:opacity-90 transition-opacity"
-                >
-                  {next ? 'Mark Complete & Continue' : 'Mark Complete'}
-                </button>
-              </form>
-            )}
-          </div>
+            </>
+          )}
+
+          {/* QUIZ lesson */}
+          {lesson.lesson_type === 'quiz' && quizData && (
+            <QuizPageClient
+              quiz={quizData}
+              priorResponses={priorResponses}
+              userId={user.id}
+              lessonId={lessonId}
+              slug={slug}
+              prev={prev ?? null}
+              next={next ?? null}
+              isCompleted={isCompleted}
+            />
+          )}
         </main>
       </div>
     </div>
