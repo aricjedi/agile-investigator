@@ -17,20 +17,29 @@ export default function SignupPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${location.origin}/auth/callback`,
       },
     })
     if (error) {
-      setError(error.message)
+      setError(error.message || error.code || 'Signup failed. Please try again.')
       setLoading(false)
-    } else {
-      setDone(true)
+      return
     }
+    // If email confirmation is required, data.user will exist but session will be null
+    if (data.user && !data.session) {
+      setDone(true)
+      return
+    }
+    // If email confirmation is disabled, session is available — redirect to dashboard
+    if (data.session) {
+      window.location.href = '/dashboard'
+      return
+    }
+    setDone(true)
   }
 
   if (done) {
