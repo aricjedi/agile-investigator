@@ -12,6 +12,7 @@ export type Course = {
   slug: string
   description: string | null
   thumbnail_url: string | null
+  video_url: string | null
   published: boolean
   created_at: string
 }
@@ -22,6 +23,7 @@ export type Module = {
   title: string
   description: string | null
   order_index: number
+  video_url: string | null
 }
 
 export type Lesson = {

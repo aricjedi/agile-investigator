@@ -98,12 +98,25 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
               </button>
             </form>
           )}
+
+          {/* Course intro video */}
+          {course.video_url && (
+            <div className="mt-10 aspect-video max-w-2xl rounded-xl overflow-hidden border border-slate-600 shadow-2xl">
+              <iframe
+                src={course.video_url}
+                className="w-full h-full"
+                allowFullScreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                title={`${course.title} — Introduction`}
+              />
+            </div>
+          )}
         </div>
       </section>
 
       {/* Module list */}
       <main className="flex-1 px-6 py-10 max-w-4xl mx-auto w-full">
-        <div className="space-y-6">
+        <div className="space-y-8">
           {(modules as ModuleWithLessons[] ?? []).map((mod, idx) => (
             <div key={mod.id} className="bg-white border border-slate-200 rounded-lg overflow-hidden">
               <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center gap-3">
@@ -120,6 +133,22 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
                   )}
                 </div>
               </div>
+
+              {/* Module video */}
+              {mod.video_url && (
+                <div className="px-6 py-5 border-b border-slate-100 bg-slate-50">
+                  <div className="aspect-video rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                    <iframe
+                      src={mod.video_url}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      title={mod.title}
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="divide-y divide-slate-100">
                 {(mod.lessons ?? [])
                   .sort((a: Lesson, b: Lesson) => a.order_index - b.order_index)
